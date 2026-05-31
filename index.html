@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>亂鬥足球 3v3 — Brawl Soccer</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- p5.js (global mode) -->
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js"></script>
+</head>
+<body>
+  <div id="game-wrap">
+    <!-- p5 canvas 會掛在這裡 -->
+    <div id="hint">WASD 移動 · 滑鼠瞄準 · 左鍵普攻/踢球 · 右鍵大招(自動鎖敵)/大招踢球</div>
+  </div>
+
+  <!-- 依相依順序載入 -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/assets.js"></script>
+  <script src="js/projectile.js"></script>
+  <script src="js/brawler.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/ball.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/sketch.js"></script>
+</body>
+</html>
