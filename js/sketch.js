@@ -633,6 +633,19 @@ function menuLayout() {
   return { cards, start };
 }
 
+// 模式切換鈕(3v3 / 1v1)
+function modeButtons() {
+  const w = 104;
+  const h = 38;
+  const gap = 16;
+  const x0 = CONFIG.canvas.w / 2 - (w * 2 + gap) / 2;
+  const y = 168;
+  return [
+    { mode: "3v3", label: "3 V 3", x: x0, y, w, h },
+    { mode: "1v1", label: "1 V 1", x: x0 + w + gap, y, w, h },
+  ];
+}
+
 function drawMenu() {
   push();
   textAlign(CENTER, CENTER);
@@ -641,11 +654,26 @@ function drawMenu() {
   fill(255);
   textSize(46);
   textStyle(BOLD);
-  text("亂鬥足球 3v3", CONFIG.canvas.w / 2, 90);
+  text("亂鬥足球", CONFIG.canvas.w / 2, 84);
   textStyle(NORMAL);
   fill(150);
-  textSize(18);
-  text("選擇你的角色", CONFIG.canvas.w / 2, 140);
+  textSize(16);
+  text("選擇模式與角色", CONFIG.canvas.w / 2, 124);
+
+  // 模式切換
+  rectMode(CORNER);
+  for (const mb of modeButtons()) {
+    const sel = game.mode === mb.mode;
+    const hov = inRect(mouseX, mouseY, mb);
+    noStroke();
+    fill(sel ? "#fbbf24" : hov ? "#475569" : "#334155");
+    rect(mb.x, mb.y, mb.w, mb.h, 9);
+    fill(sel ? color(26, 18, 5) : color(235));
+    textSize(18);
+    textStyle(BOLD);
+    text(mb.label, mb.x + mb.w / 2, mb.y + mb.h / 2 + 1);
+    textStyle(NORMAL);
+  }
 
   const { cards, start } = menuLayout();
   for (const c of cards) drawCharCard(c);
@@ -671,7 +699,9 @@ function drawMenu() {
     start.y + start.h + 32
   );
   text(
-    "雙方各 3 角色 · 你操控 1 隻其餘為 AI · 數字鍵 1~3 選角",
+    game.mode === "1v1"
+      ? "1 對 1 單挑 · 你 vs 一名 AI(隨機角色) · 數字鍵 1~3 選角"
+      : "雙方各 3 角色 · 你操控 1 隻其餘為 AI · 數字鍵 1~3 選角",
     CONFIG.canvas.w / 2,
     start.y + start.h + 54
   );
@@ -736,6 +766,12 @@ function drawCharCard(c) {
 }
 
 function handleMenuClick() {
+  for (const mb of modeButtons()) {
+    if (inRect(mouseX, mouseY, mb)) {
+      game.mode = mb.mode;
+      return;
+    }
+  }
   const { cards, start } = menuLayout();
   for (const c of cards) {
     if (inRect(mouseX, mouseY, c)) {

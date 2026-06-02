@@ -20,6 +20,7 @@ class Game {
 
     this.selectedKey = "shelly"; // 選角畫面預設
     this.selectedMapId = MAP_ORDER[0]; // 選圖畫面預設
+    this.mode = "3v3"; // "3v3" | "1v1"
 
     // 當前地圖佈局(選圖後由 applyMap 設定；先給預設避免繪製出錯)
     this.obstacles = MAPS[0].obstacles;
@@ -96,23 +97,33 @@ class Game {
     this.brawlers = [];
     this.projectiles = [];
     this.pendingShots = [];
-    const xs = [230, 350, 470];
-    const order = BRAWLER_ORDER;
 
-    // A 隊(玩家方，下方出生)
-    order.forEach((key, i) => {
-      const isPlayer = key === playerKey;
-      const b = new Brawler(key, "A", isPlayer, xs[i], 705);
-      if (!isPlayer) b.ai = new AIController(b);
-      else this.player = b;
-      this.brawlers.push(b);
-    });
-    // B 隊(敵方，上方出生)
-    order.forEach((key, i) => {
-      const b = new Brawler(key, "B", false, xs[i], 185);
-      b.ai = new AIController(b);
-      this.brawlers.push(b);
-    });
+    if (this.mode === "1v1") {
+      // 1v1:玩家(下) vs 一名 AI(上,隨機角色),皆在球門正中前出生
+      const p = new Brawler(playerKey, "A", true, this.centerX, 705);
+      this.player = p;
+      this.brawlers.push(p);
+      const enemyKey = BRAWLER_ORDER[Math.floor(Math.random() * BRAWLER_ORDER.length)];
+      const e = new Brawler(enemyKey, "B", false, this.centerX, 185);
+      e.ai = new AIController(e);
+      this.brawlers.push(e);
+    } else {
+      // 3v3
+      const xs = [230, 350, 470];
+      const order = BRAWLER_ORDER;
+      order.forEach((key, i) => {
+        const isPlayer = key === playerKey;
+        const b = new Brawler(key, "A", isPlayer, xs[i], 705);
+        if (!isPlayer) b.ai = new AIController(b);
+        else this.player = b;
+        this.brawlers.push(b);
+      });
+      order.forEach((key, i) => {
+        const b = new Brawler(key, "B", false, xs[i], 185);
+        b.ai = new AIController(b);
+        this.brawlers.push(b);
+      });
+    }
 
     this.ball = new Ball(this.centerX, this.centerY);
   }

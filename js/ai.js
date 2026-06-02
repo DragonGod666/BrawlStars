@@ -173,9 +173,10 @@ class AIController {
 
     const now = millis();
 
-    // --- 持球：帶往敵門，近門就射 ---
+    // --- 持球：帶往敵門，近門就射(瞄準側邊射門縫,避開門前中央掩體) ---
     if (b.hasBall) {
-      b.intent.aimX = enemyGoal.x;
+      const laneX = b.x < enemyGoal.x ? enemyGoal.x - 56 : enemyGoal.x + 56; // 左/右射門縫
+      b.intent.aimX = laneX;
       b.intent.aimY = enemyGoal.y;
       const dGoal = distXY(b.x, b.y, enemyGoal.x, enemyGoal.y);
       if (dGoal < 235) {
