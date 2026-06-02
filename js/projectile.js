@@ -18,6 +18,9 @@ class Projectile {
     this.color = opts.color;
     this.knockback = opts.knockback || 0;
     this.chargesSuper = !!opts.chargesSuper; // 命中是否替發射者充大招(普攻 true)
+    this.pierce = !!opts.pierce;             // 穿透敵人(不在首次命中後消失)
+    this.breaksWalls = !!opts.breaksWalls;   // 破壞障礙物並穿牆續飛
+    this.hitSet = new Set();                 // 已命中的角色(避免同一發重複扣血)
 
     this.dmgNear = opts.dmgNear;
     this.dmgFar = opts.dmgFar !== undefined ? opts.dmgFar : opts.dmgNear;
@@ -143,6 +146,7 @@ function spawnFan(b, cfg, isSuper) {
         team: b.team, owner: b, color: cfg.color,
         dmgNear: cfg.dmgNear, dmgFar: cfg.dmgFar,
         knockback: cfg.knockback, chargesSuper: !isSuper,
+        pierce: cfg.pierce, breaksWalls: cfg.breaksWalls,
         asset: isSuper ? "pellet_super" : "pellet",
       })
     );
@@ -206,6 +210,7 @@ function spawnLine(b, cfg, isSuper) {
           speed: cfg.projSpeed, radius: cfg.projRadius, range: cfg.range,
           team: b.team, owner: b, color: cfg.color,
           dmgNear: cfg.dmg, dmgFar: cfg.dmg, chargesSuper: !isSuper,
+          pierce: cfg.pierce, breaksWalls: cfg.breaksWalls,
           asset: isSuper ? "bolt_super" : "bolt",
         });
       },

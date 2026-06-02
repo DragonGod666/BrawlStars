@@ -17,25 +17,37 @@ const SVG_SHELLY = svgDoc(
   100,
   118,
   `
-  <g stroke="#2a1a3a" stroke-width="3" stroke-linejoin="round">
-    <rect x="38" y="86" width="10" height="20" rx="5" fill="#3b2a52"/>
-    <rect x="52" y="86" width="10" height="20" rx="5" fill="#3b2a52"/>
-    <rect x="34" y="100" width="17" height="10" rx="4" fill="#241634"/>
-    <rect x="49" y="100" width="17" height="10" rx="4" fill="#241634"/>
-    <path d="M30 60 Q50 51 70 60 L66 91 Q50 97 34 91 Z" fill="#8B5CF6"/>
-    <path d="M44 56 L56 56 L54 93 L46 93 Z" fill="#a78bdf"/>
-    <rect x="22" y="62" width="17" height="11" rx="5" fill="#7c4ddb"/>
-    <rect x="61" y="62" width="17" height="11" rx="5" fill="#7c4ddb"/>
-    <rect x="16" y="66" width="52" height="8" rx="3" fill="#5b6470"/>
-    <rect x="58" y="63" width="17" height="13" rx="3" fill="#7a4a2b"/>
-    <circle cx="50" cy="38" r="22" fill="#f2c79b"/>
-    <path d="M27 39 Q24 11 50 11 Q76 11 73 39 Q66 25 50 25 Q34 25 27 39 Z" fill="#7c3aed"/>
-    <path d="M27 38 Q23 52 31 58 L35 44 Z" fill="#7c3aed"/>
-    <path d="M73 38 Q77 52 69 58 L65 44 Z" fill="#7c3aed"/>
+  <g stroke="#241a14" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <!-- 馬尾(頭後) -->
+    <path d="M40 28 Q18 34 22 66 Q30 56 41 52 Z" fill="#7c4a2d"/>
+    <!-- 腿(丹寧短褲下) -->
+    <rect x="40" y="86" width="9" height="20" rx="4" fill="#3f5170"/>
+    <rect x="51" y="86" width="9" height="20" rx="4" fill="#3f5170"/>
+    <!-- 鞋 -->
+    <rect x="35" y="100" width="16" height="10" rx="4" fill="#4b2f1c"/>
+    <rect x="49" y="100" width="16" height="10" rx="4" fill="#4b2f1c"/>
+    <!-- 身體:橄欖綠背心 + 內衫 -->
+    <path d="M33 58 Q50 50 67 58 L62 90 Q50 96 38 90 Z" fill="#6f8f4d"/>
+    <path d="M44 54 L56 54 L55 92 L45 92 Z" fill="#e8e2cf"/>
+    <!-- 後手臂 -->
+    <rect x="24" y="60" width="15" height="10" rx="5" fill="#e7b07f"/>
+    <!-- 雙管散彈槍(朝右前) -->
+    <rect x="56" y="58" width="13" height="15" rx="3" fill="#7a4a2b"/>
+    <rect x="62" y="60" width="33" height="10" rx="2.5" fill="#5f6670"/>
+    <line x1="62" y1="65" x2="95" y2="65" stroke="#3c424c" stroke-width="2"/>
+    <rect x="62" y="60" width="33" height="3.5" rx="2" fill="#8a929c"/>
+    <!-- 持槍前手 -->
+    <rect x="58" y="62" width="12" height="9" rx="4.5" fill="#e7b07f"/>
+    <!-- 頭 -->
+    <circle cx="50" cy="38" r="21" fill="#f1c499"/>
+    <!-- 頭髮(瀏海) -->
+    <path d="M28 39 Q26 13 50 13 Q74 13 72 39 Q64 26 50 26 Q36 26 28 39 Z" fill="#8a5230"/>
+    <!-- 紅色頭帶 -->
+    <rect x="29" y="32" width="42" height="6" rx="3" fill="#c0392b"/>
   </g>
-  <circle cx="42" cy="40" r="3.3" fill="#2a1a3a"/>
-  <circle cx="58" cy="40" r="3.3" fill="#2a1a3a"/>
-  <path d="M44 48 Q50 53 56 48" stroke="#2a1a3a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="43" cy="40" r="3.1" fill="#241a14"/>
+  <circle cx="57" cy="40" r="3.1" fill="#241a14"/>
+  <path d="M44 47 Q50 52 56 47" stroke="#241a14" stroke-width="2.4" fill="none" stroke-linecap="round"/>
 `
 );
 
@@ -43,34 +55,41 @@ const SVG_SPIKE = svgDoc(
   100,
   112,
   `
-  <g stroke="#0f5132" stroke-width="3" stroke-linejoin="round">
-    <rect x="13" y="64" width="17" height="10" rx="5" fill="#1f9d55"/>
-    <rect x="70" y="64" width="17" height="10" rx="5" fill="#1f9d55"/>
-    <path d="M34 92 Q29 49 50 45 Q71 49 66 92 Q50 99 34 92 Z" fill="#22C55E"/>
-    <path d="M50 50 L50 90" stroke="#16a34a" stroke-width="3" fill="none"/>
-    <path d="M42 54 L40 88" stroke="#16a34a" stroke-width="2" fill="none"/>
-    <path d="M58 54 L60 88" stroke="#16a34a" stroke-width="2" fill="none"/>
+  <g stroke="#0f5132" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <!-- 雙側小芽手臂 -->
+    <path d="M31 70 Q15 66 15 51 Q25 54 31 63 Z" fill="#2bb763"/>
+    <path d="M69 70 Q85 66 85 51 Q75 54 69 63 Z" fill="#2bb763"/>
+    <!-- 身體 -->
+    <path d="M33 92 Q28 47 50 44 Q72 47 67 92 Q50 100 33 92 Z" fill="#2bb763"/>
+    <!-- 縱向紋路 -->
+    <path d="M50 52 L50 90" stroke="#1f9d52" stroke-width="3" fill="none"/>
+    <path d="M41 56 L39 88" stroke="#1f9d52" stroke-width="2.4" fill="none"/>
+    <path d="M59 56 L61 88" stroke="#1f9d52" stroke-width="2.4" fill="none"/>
+    <!-- 腳 -->
     <rect x="38" y="92" width="10" height="13" rx="5" fill="#15803d"/>
     <rect x="52" y="92" width="10" height="13" rx="5" fill="#15803d"/>
   </g>
-  <g fill="#d9f99d" stroke="#0f5132" stroke-width="1.4">
-    <polygon points="50,40 45,50 55,50"/>
-    <polygon points="31,60 23,56 30,67"/>
-    <polygon points="69,60 77,56 70,67"/>
-    <polygon points="34,80 25,82 33,89"/>
-    <polygon points="66,80 75,82 67,89"/>
+  <!-- 刺 -->
+  <g fill="#e2fbb0" stroke="#0f5132" stroke-width="1.2">
+    <polygon points="50,50 46,42 54,42"/>
+    <polygon points="31,61 22,58 30,67"/>
+    <polygon points="69,61 78,58 70,67"/>
+    <polygon points="34,80 25,82 33,87"/>
+    <polygon points="66,80 75,82 67,87"/>
   </g>
+  <!-- 頂部花朵 -->
   <g stroke="#9a3412" stroke-width="0.8">
-    <circle cx="50" cy="33" r="4.2" fill="#f59e0b"/>
-    <circle cx="50" cy="26" r="3.6" fill="#fb7185"/>
-    <circle cx="43" cy="31" r="3.6" fill="#fb7185"/>
-    <circle cx="57" cy="31" r="3.6" fill="#fb7185"/>
-    <circle cx="45" cy="37" r="3.6" fill="#fb7185"/>
-    <circle cx="55" cy="37" r="3.6" fill="#fb7185"/>
+    <circle cx="50" cy="30" r="5" fill="#fb7185"/>
+    <circle cx="43" cy="34" r="4.6" fill="#fb7185"/>
+    <circle cx="57" cy="34" r="4.6" fill="#fb7185"/>
+    <circle cx="46" cy="40" r="4.6" fill="#fb7185"/>
+    <circle cx="54" cy="40" r="4.6" fill="#fb7185"/>
+    <circle cx="50" cy="36" r="4" fill="#f59e0b"/>
   </g>
-  <circle cx="43" cy="64" r="3.5" fill="#0f5132"/>
-  <circle cx="57" cy="64" r="3.5" fill="#0f5132"/>
-  <path d="M44 72 Q50 77 56 72" stroke="#0f5132" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- 臉 -->
+  <circle cx="43" cy="66" r="3.4" fill="#0f5132"/>
+  <circle cx="57" cy="66" r="3.4" fill="#0f5132"/>
+  <path d="M44 73 Q50 78 56 73" stroke="#0f5132" stroke-width="2.5" fill="none" stroke-linecap="round"/>
 `
 );
 
@@ -78,48 +97,82 @@ const SVG_COLT = svgDoc(
   100,
   118,
   `
-  <g stroke="#3a0d0d" stroke-width="3" stroke-linejoin="round">
-    <rect x="38" y="86" width="10" height="20" rx="5" fill="#3b2326"/>
-    <rect x="52" y="86" width="10" height="20" rx="5" fill="#3b2326"/>
-    <rect x="34" y="100" width="17" height="10" rx="4" fill="#241317"/>
-    <rect x="49" y="100" width="17" height="10" rx="4" fill="#241317"/>
-    <path d="M32 60 Q50 52 68 60 L64 91 Q50 96 36 91 Z" fill="#EF4444"/>
-    <path d="M46 56 L54 56 L53 93 L47 93 Z" fill="#fef2f2"/>
-    <rect x="34" y="84" width="32" height="7" rx="2" fill="#7a4a2b"/>
-    <rect x="47" y="84" width="6" height="7" fill="#fbbf24"/>
-    <rect x="22" y="64" width="16" height="10" rx="5" fill="#dc2626"/>
-    <rect x="62" y="64" width="16" height="10" rx="5" fill="#dc2626"/>
-    <rect x="11" y="66" width="15" height="7" rx="2" fill="#5b6470"/>
-    <rect x="74" y="66" width="15" height="7" rx="2" fill="#5b6470"/>
-    <circle cx="50" cy="38" r="21" fill="#f2c79b"/>
+  <g stroke="#1b2333" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <!-- 腿 -->
+    <rect x="40" y="86" width="9" height="20" rx="4" fill="#2b3550"/>
+    <rect x="51" y="86" width="9" height="20" rx="4" fill="#2b3550"/>
+    <!-- 靴 -->
+    <rect x="35" y="100" width="16" height="10" rx="4" fill="#3a2415"/>
+    <rect x="49" y="100" width="16" height="10" rx="4" fill="#3a2415"/>
+    <!-- 身體:藍色背心 + 內衫 -->
+    <path d="M33 58 Q50 50 67 58 L62 91 Q50 96 38 91 Z" fill="#2f6bef"/>
+    <path d="M45 54 L55 54 L54 92 L46 92 Z" fill="#dbe6ff"/>
+    <!-- 警徽 -->
+    <circle cx="50" cy="70" r="5" fill="#fcd34d"/>
+    <path d="M50 66 L51.2 69 L54 69 L51.8 71 L52.6 74 L50 72 L47.4 74 L48.2 71 L46 69 L48.8 69 Z" fill="#b45309"/>
+    <!-- 後手臂(收後) + 左輪 -->
+    <rect x="24" y="63" width="15" height="10" rx="5" fill="#e7b07f"/>
+    <rect x="14" y="64" width="14" height="7" rx="2" fill="#6b6b6b"/>
+    <!-- 前手臂 + 主手左輪(朝右前) -->
+    <rect x="60" y="62" width="13" height="10" rx="5" fill="#e7b07f"/>
+    <rect x="70" y="59" width="21" height="8" rx="2" fill="#6b6b6b"/>
+    <rect x="70" y="59" width="21" height="3" rx="1.5" fill="#9aa0aa"/>
+    <rect x="67" y="58" width="8" height="13" rx="2" fill="#7a4a2b"/>
+    <!-- 頭 -->
+    <circle cx="50" cy="38" r="20" fill="#f1c499"/>
+    <!-- 牛仔帽 -->
+    <ellipse cx="50" cy="24" rx="29" ry="6.5" fill="#9a6b3f"/>
+    <path d="M36 24 Q38 7 50 7 Q62 7 64 24 Z" fill="#b07d4a"/>
+    <rect x="36" y="20" width="28" height="4" fill="#6b4a28"/>
   </g>
-  <g stroke="#3a0d0d" stroke-width="3" stroke-linejoin="round">
-    <ellipse cx="50" cy="24" rx="28" ry="7" fill="#b91c1c"/>
-    <path d="M37 24 Q39 8 50 8 Q61 8 63 24 Z" fill="#dc2626"/>
-    <rect x="37" y="20" width="26" height="4" fill="#7a1212"/>
-  </g>
-  <circle cx="43" cy="40" r="3.2" fill="#3a0d0d"/>
-  <circle cx="57" cy="40" r="3.2" fill="#3a0d0d"/>
-  <path d="M44 47 Q50 51 56 47" stroke="#3a0d0d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="43" cy="40" r="3.1" fill="#1b2333"/>
+  <circle cx="57" cy="40" r="3.1" fill="#1b2333"/>
+  <path d="M44 47 Q50 51 56 47" stroke="#1b2333" stroke-width="2.4" fill="none" stroke-linecap="round"/>
 `
 );
 
-// ---- 足球 ----
-const SVG_BALL = svgDoc(
-  60,
-  60,
-  `
-  <circle cx="30" cy="30" r="27" fill="#f8fafc" stroke="#1f2937" stroke-width="3"/>
-  <g fill="#1f2937">
-    <polygon points="30,17 38,23 35,33 25,33 22,23"/>
-    <polygon points="30,17 22,23 13,19 20,11 30,10"/>
-    <polygon points="30,17 38,23 47,19 40,11 30,10"/>
-    <polygon points="25,33 21,43 13,39 14,29"/>
-    <polygon points="35,33 39,43 47,39 46,29"/>
-    <polygon points="25,33 35,33 38,44 30,49 22,44"/>
-  </g>
-`
-);
+// ---- 足球(經典黑白五邊形) ----
+function buildBallSVG() {
+  const cx = 30;
+  const cy = 30;
+  const rad = (d) => (d * Math.PI) / 180;
+  const P = (a, r) => [cx + Math.cos(rad(a)) * r, cy + Math.sin(rad(a)) * r];
+  const poly = (pts) => pts.map(([x, y]) => x.toFixed(1) + "," + y.toFixed(1)).join(" ");
+
+  // 中央正五邊形(尖端朝上)
+  const center = [];
+  for (let k = 0; k < 5; k++) center.push(P(-90 + k * 72, 9));
+
+  // 沿五條邊法線方向的邊緣黑色補丁 + 接縫線
+  let patches = "";
+  let seams = "";
+  for (let k = 0; k < 5; k++) {
+    const a = -54 + k * 72; // 邊法線方向
+    const [bx, by] = P(a, 19.5); // 補丁中心(靠近球緣,留邊不溢出)
+    const pts = [];
+    for (let j = 0; j < 5; j++) {
+      const aa = a + 180 + j * 72; // 尖端朝向球心
+      pts.push([bx + Math.cos(rad(aa)) * 6.5, by + Math.sin(rad(aa)) * 6.5]);
+    }
+    patches += `<polygon points="${poly(pts)}"/>`;
+    // 補丁連到中央五邊形的兩個相鄰頂點
+    const v0 = center[k];
+    const v1 = center[(k + 1) % 5];
+    seams += `<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${v0[0].toFixed(1)}" y2="${v0[1].toFixed(1)}"/>`;
+    seams += `<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${v1[0].toFixed(1)}" y2="${v1[1].toFixed(1)}"/>`;
+  }
+
+  return svgDoc(
+    60,
+    60,
+    `<circle cx="30" cy="30" r="27" fill="#f8fafc" stroke="#1f2937" stroke-width="2.5"/>
+     <g stroke="#4b5563" stroke-width="1.3" stroke-linecap="round">${seams}</g>
+     <g fill="#1f2937" stroke="#111827" stroke-width="0.6" stroke-linejoin="round">
+       <polygon points="${poly(center)}"/>
+       ${patches}
+     </g>`
+  );
+}
 
 // ---- 草叢(可平鋪) ----
 const SVG_BUSH = svgDoc(
@@ -208,7 +261,7 @@ const Assets = {
     char_shelly: SVG_SHELLY,
     char_spike: SVG_SPIKE,
     char_colt: SVG_COLT,
-    ball: SVG_BALL,
+    ball: buildBallSVG(),
     bush: SVG_BUSH,
     goal: buildGoalSVG(),
     pellet: pelletSVG("#c4b5fd", "#8B5CF6"),

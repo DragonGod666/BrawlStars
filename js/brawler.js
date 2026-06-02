@@ -200,11 +200,11 @@ class Brawler {
     }
     pop();
 
-    // 角色立繪(直立、依瞄準左右翻面)
+    // 角色立繪(直立、依瞄準左右翻面);尺寸貼近碰撞框,視覺與被牆擋住的位置一致
     const flip = Math.cos(this.aimAngle) < 0;
-    const sw = this.radius * 3.0;
-    const sh = this.radius * 3.6;
-    const drawn = Assets.draw("char_" + this.key, this.x, this.y - this.radius * 0.5, sw, sh, 0, flip);
+    const sw = this.radius * 2.5;
+    const sh = this.radius * 3.0;
+    const drawn = Assets.draw("char_" + this.key, this.x, this.y - this.radius * 0.45, sw, sh, 0, flip);
     if (!drawn) {
       push();
       stroke(15, 23, 42);

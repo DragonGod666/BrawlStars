@@ -47,28 +47,9 @@ const CONFIG = {
   // 草叢：站在其中會對「敵方」隱形(攻擊/持球/敵人靠近會現形)
   bushRevealRadius: 80,
 
-  // 障礙物(阻擋移動、子彈、足球) — CORNER 座標
-  obstacles: [
-    // 中場掩體
-    { x: 150, y: 320, w: 60, h: 62 },
-    { x: 490, y: 320, w: 60, h: 62 },
-    { x: 150, y: 508, w: 60, h: 62 },
-    { x: 490, y: 508, w: 60, h: 62 },
-    // 敵方(上)球門前掩體 — 放慢進攻節奏
-    { x: 232, y: 238, w: 56, h: 46 },
-    { x: 412, y: 238, w: 56, h: 46 },
-    // 我方(下)球門前掩體
-    { x: 232, y: 606, w: 56, h: 46 },
-    { x: 412, y: 606, w: 56, h: 46 },
-  ],
-
-  // 草叢區 — CORNER 座標
-  bushes: [
-    { x: 84, y: 392, w: 96, h: 106 },   // 中場左
-    { x: 520, y: 392, w: 96, h: 106 },  // 中場右
-    { x: 285, y: 158, w: 130, h: 54 },  // 敵門前
-    { x: 285, y: 678, w: 130, h: 54 },  // 我門前
-  ],
+  // 障礙物與草叢佈局改由「地圖」定義(見檔案末端 MAPS)。
+  // 牆面預設配色(地圖未指定時的備援)
+  wallTheme: { base: "#475569", hi: "#64748b", edge: "#0f172a" },
 
   // ---------------------------------------------------------
   // 三角色：雪莉 / 史派克 / 柯爾特
@@ -79,7 +60,7 @@ const CONFIG = {
       name: "雪莉",
       color: "#8B5CF6",   // 紫色實心圓
       maxHp: 4200,
-      speed: 3.2,
+      speed: 2.35,
       radius: 20,
       ammoReloadMs: 1600, // 每格彈藥回充時間
       superPerHit: 9,     // 每顆普攻彈命中累積的大招值
@@ -106,6 +87,8 @@ const CONFIG = {
         dmgFar: 230,
         knockback: 14,
         color: "#FF3DCB", // 亮洋紅(區分大招)
+        pierce: true,      // 穿透敵人
+        breaksWalls: true, // 破壞牆面
       },
     },
 
@@ -114,7 +97,7 @@ const CONFIG = {
       name: "史派克",
       color: "#22C55E",   // 綠色實心圓
       maxHp: 3300,
-      speed: 3.3,
+      speed: 2.45,
       radius: 19,
       ammoReloadMs: 1700,
       superPerHit: 11,
@@ -158,7 +141,7 @@ const CONFIG = {
       name: "柯爾特",
       color: "#EF4444",   // 紅色實心圓
       maxHp: 3100,
-      speed: 3.4,
+      speed: 2.55,
       radius: 18,
       ammoReloadMs: 1550,
       superPerHit: 7,
@@ -185,6 +168,8 @@ const CONFIG = {
         projRadius: 5,
         dmg: 220,
         color: "#FDE047",   // 黃(區分大招)
+        pierce: true,       // 穿透敵人
+        breaksWalls: true,  // 破壞牆面
       },
     },
   },
@@ -195,9 +180,99 @@ const BRAWLER_ORDER = ["shelly", "spike", "colt"];
 
 // 遊戲狀態
 const STATE = {
-  MENU: "MENU",
+  MENU: "MENU",         // 選角
+  MAPSELECT: "MAPSELECT", // 選地圖
   COUNTDOWN: "COUNTDOWN",
   PLAYING: "PLAYING",
   GOAL: "GOAL",
   GAMEOVER: "GAMEOVER",
 };
+
+// ============================================================
+// 地圖：每張地圖定義自己的障礙物與草叢佈局(球場/球門共用)。
+// 佈局以「上半場」座標撰寫，透過 mirrorY 自動鏡射出下半場，
+// 確保上下兩隊完全對稱、公平。座標皆為 CORNER {x,y,w,h}。
+// ============================================================
+const FIELD_CY = (CONFIG.field.top + CONFIG.field.bottom) / 2; // 445
+
+// 將上半場物件鏡射複製到下半場(置中於中線者不重複)
+function mirrorY(items) {
+  const out = [];
+  for (const it of items) {
+    out.push({ x: it.x, y: it.y, w: it.w, h: it.h });
+    const my = 2 * FIELD_CY - it.y - it.h;
+    if (Math.abs(my - it.y) > 0.5) out.push({ x: it.x, y: my, w: it.w, h: it.h });
+  }
+  return out;
+}
+
+const MAPS = [
+  {
+    id: "stadium",
+    name: "亂鬥球場",
+    desc: ["中央磚牆對峙", "邊路開闊好繞後"],
+    wall: { base: "#b45f43", hi: "#cf7a5c", edge: "#5c2a1a" }, // 紅磚
+    obstacles: mirrorY([
+      // 角落 L 形(兩矩形重疊 → 渲染成相連一塊)
+      { x: 90, y: 150, w: 100, h: 30 }, { x: 90, y: 150, w: 30, h: 96 },
+      { x: 510, y: 150, w: 100, h: 30 }, { x: 580, y: 150, w: 30, h: 96 },
+      { x: 300, y: 300, w: 100, h: 30 }, // 中央橫牆
+      { x: 150, y: 418, w: 48, h: 54 },  // 中場側柱(置中)
+      { x: 502, y: 418, w: 48, h: 54 },
+    ]),
+    bushes: mirrorY([
+      { x: 84, y: 300, w: 92, h: 100 },  // 邊路草叢
+      { x: 524, y: 300, w: 92, h: 100 },
+      { x: 236, y: 368, w: 60, h: 62 },  // 中央側翼
+      { x: 404, y: 368, w: 60, h: 62 },
+    ]),
+  },
+  {
+    id: "fortress",
+    name: "木桶要塞",
+    desc: ["箱體密集纏鬥", "錯位磚牆掩護"],
+    wall: { base: "#a3742f", hi: "#c08f43", edge: "#5a3d12" }, // 木箱
+    obstacles: mirrorY([
+      // 角落 L 形(較大)
+      { x: 90, y: 150, w: 110, h: 30 }, { x: 90, y: 150, w: 30, h: 120 },
+      { x: 500, y: 150, w: 110, h: 30 }, { x: 580, y: 150, w: 30, h: 120 },
+      { x: 212, y: 240, w: 48, h: 44 },  // 球門漏斗
+      { x: 440, y: 240, w: 48, h: 44 },
+      { x: 150, y: 392, w: 30, h: 106 }, // 中場側豎牆(置中)
+      { x: 520, y: 392, w: 30, h: 106 },
+      { x: 300, y: 300, w: 100, h: 28 }, // 中央橫牆
+    ]),
+    bushes: mirrorY([
+      { x: 196, y: 300, w: 64, h: 60 },  // 側邊
+      { x: 436, y: 300, w: 64, h: 60 },
+      { x: 284, y: 372, w: 46, h: 71 },  // 中央雙側翼
+      { x: 370, y: 372, w: 46, h: 71 },
+    ]),
+  },
+  {
+    id: "bowl",
+    name: "後院足球場",
+    desc: ["長柵欄封鎖中路", "草帶側翼潛行"],
+    wall: { base: "#d98324", hi: "#eaa54a", edge: "#7a4410" }, // 橘柵欄
+    obstacles: mirrorY([
+      { x: 246, y: 150, w: 50, h: 30 },  // 球門柵
+      { x: 404, y: 150, w: 50, h: 30 },
+      { x: 150, y: 226, w: 130, h: 30 }, // 長柵欄(左右各一，留中路)
+      { x: 420, y: 226, w: 130, h: 30 },
+      { x: 300, y: 318, w: 100, h: 28 }, // 中央柵欄
+      { x: 96, y: 332, w: 30, h: 90 },   // 側邊豎柵
+      { x: 574, y: 332, w: 30, h: 90 },
+    ]),
+    bushes: mirrorY([
+      { x: 78, y: 196, w: 54, h: 150 },  // 高草帶側翼
+      { x: 568, y: 196, w: 54, h: 150 },
+      { x: 250, y: 250, w: 58, h: 118 }, // 中央草帶
+      { x: 392, y: 250, w: 58, h: 118 },
+    ]),
+  },
+];
+
+const MAP_ORDER = MAPS.map((m) => m.id);
+function getMap(id) {
+  return MAPS.find((m) => m.id === id) || MAPS[0];
+}

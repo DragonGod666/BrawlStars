@@ -19,6 +19,26 @@ class Game {
     this.winner = null;
 
     this.selectedKey = "shelly"; // 選角畫面預設
+    this.selectedMapId = MAP_ORDER[0]; // 選圖畫面預設
+
+    // 當前地圖佈局(選圖後由 applyMap 設定；先給預設避免繪製出錯)
+    this.obstacles = MAPS[0].obstacles;
+    this.bushes = MAPS[0].bushes;
+    this.wallTheme = MAPS[0].wall;
+  }
+
+  // 套用選定地圖的佈局與配色
+  applyMap(mapId) {
+    const m = getMap(mapId);
+    this.selectedMapId = m.id;
+    this.loadObstacles(); // 可破壞副本(不污染共用地圖資料)
+    this.bushes = m.bushes;
+    this.wallTheme = m.wall;
+  }
+
+  // 從目前地圖深拷貝一份障礙物(破牆後可在開球時重生)
+  loadObstacles() {
+    this.obstacles = getMap(this.selectedMapId).obstacles.map((o) => ({ ...o }));
   }
 
   // ---------- 幾何 / 球門 ----------
@@ -61,8 +81,9 @@ class Game {
   }
 
   // ---------- 建立比賽 ----------
-  startMatch(playerKey) {
+  startMatch(playerKey, mapId) {
     this.selectedKey = playerKey;
+    if (mapId) this.applyMap(mapId);
     this.score = { A: 0, B: 0 };
     this.matchTimeLeftMs = CONFIG.match.durationMs;
     this.winner = null;
@@ -112,6 +133,7 @@ class Game {
     this.ball.reset(this.centerX, this.centerY);
     this.projectiles = [];
     this.pendingShots = [];
+    this.loadObstacles(); // 每次開球牆面重生
   }
 
   startCountdown() {
@@ -171,22 +193,32 @@ class Game {
 
   // ---------- 障礙物碰撞 ----------
   resolveBrawlerObstacles() {
+    const f = CONFIG.field;
     for (const b of this.brawlers) {
       if (!b.alive) continue;
-      for (const o of CONFIG.obstacles) {
-        const res = resolveCircleRect(b.x, b.y, b.radius, o);
-        if (res) {
-          b.x = res.x;
-          b.y = res.y;
+      // 多趟迭代:同時壓到相鄰障礙物時收斂出無重疊位置,避免抖動/卡死
+      for (let iter = 0; iter < 3; iter++) {
+        let moved = false;
+        for (const o of this.obstacles) {
+          const res = resolveCircleRect(b.x, b.y, b.radius, o);
+          if (res) {
+            b.x = res.x;
+            b.y = res.y;
+            moved = true;
+          }
         }
+        if (!moved) break;
       }
+      // 推出後重新夾回球場邊界
+      b.x = clampNum(b.x, f.left + b.radius, f.right - b.radius);
+      b.y = clampNum(b.y, f.top + b.radius, f.bottom - b.radius);
     }
   }
 
   resolveBallObstacles() {
     const ball = this.ball;
     if (ball.carrier) return;
-    for (const o of CONFIG.obstacles) {
+    for (const o of this.obstacles) {
       const res = resolveCircleRect(ball.x, ball.y, ball.radius, o);
       if (res) {
         ball.x = res.x;
@@ -202,20 +234,27 @@ class Game {
   }
 
   killProjectilesOnObstacles() {
+    const destroyed = new Set();
     for (const p of this.projectiles) {
       if (!p.alive) continue;
-      for (const o of CONFIG.obstacles) {
+      for (const o of this.obstacles) {
+        if (destroyed.has(o)) continue;
         if (circleRectOverlap(p.x, p.y, p.radius, o)) {
+          if (p.breaksWalls) {
+            destroyed.add(o); // 打掉這段牆,子彈穿牆續飛(不 kill)
+            continue;
+          }
           p.kill();
           break;
         }
       }
     }
+    if (destroyed.size) this.obstacles = this.obstacles.filter((o) => !destroyed.has(o));
   }
 
   // ---------- 草叢隱形 ----------
   isInBush(x, y) {
-    for (const bz of CONFIG.bushes) {
+    for (const bz of this.bushes) {
       if (x >= bz.x && x <= bz.x + bz.w && y >= bz.y && y <= bz.y + bz.h) return true;
     }
     return false;
@@ -269,11 +308,14 @@ class Game {
       if (!p.alive) continue;
       for (const b of this.brawlers) {
         if (!b.alive || b.team === p.team) continue;
+        if (p.hitSet.has(b)) continue; // 穿透:同一發不重複扣血
         if (circlesOverlap(p.x, p.y, p.radius, b.x, b.y, b.radius)) {
           b.takeDamage(p.computeDamage(), p.knockback, p.dirAngle);
+          p.hitSet.add(b);
           if (p.chargesSuper && p.owner && p.owner.alive) {
             p.owner.gainSuper(p.owner.stats.superPerHit);
           }
+          if (p.pierce) continue; // 穿透:繼續打後方敵人,不消失
           p.kill(); // 仙人掌會在此觸發爆裂
           break;
         }

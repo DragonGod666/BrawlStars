@@ -28,6 +28,10 @@ function draw() {
     drawMenu();
     return;
   }
+  if (game.state === STATE.MAPSELECT) {
+    drawMapSelect();
+    return;
+  }
 
   // 設定玩家意圖 → 模擬
   if (game.player) updatePlayerIntent();
@@ -89,6 +93,10 @@ function mousePressed() {
     handleMenuClick();
     return false;
   }
+  if (game.state === STATE.MAPSELECT) {
+    handleMapSelectClick();
+    return false;
+  }
   if (game.state === STATE.GAMEOVER) {
     game.state = STATE.MENU;
     leftHeld = false;
@@ -109,16 +117,27 @@ function keyPressed() {
     if (key === "1") game.selectedKey = "shelly";
     else if (key === "2") game.selectedKey = "spike";
     else if (key === "3") game.selectedKey = "colt";
+    else if (keyCode === ENTER || key === " ") goToMapSelect();
+  } else if (game.state === STATE.MAPSELECT) {
+    const n = parseInt(key, 10);
+    if (n >= 1 && n <= MAP_ORDER.length) game.selectedMapId = MAP_ORDER[n - 1];
     else if (keyCode === ENTER || key === " ") startGame();
+    else if (keyCode === ESCAPE || key === "b" || key === "B") game.state = STATE.MENU;
   } else if (game.state === STATE.GAMEOVER) {
     if (key === "r" || key === "R" || keyCode === ENTER) game.state = STATE.MENU;
   }
 }
 
+// 選角 → 進入選圖頁
+function goToMapSelect() {
+  game.state = STATE.MAPSELECT;
+}
+
+// 選圖完成 → 開打
 function startGame() {
   leftHeld = false;
   superRequested = false;
-  game.startMatch(game.selectedKey);
+  game.startMatch(game.selectedKey, game.selectedMapId);
 }
 
 // ------------------------------------------------------------
@@ -159,22 +178,23 @@ function drawField() {
   drawWalls();
 }
 
+// 同色分層繪製:相鄰/重疊矩形會無縫合併成一整塊(L 形轉角看起來相連)
 function drawObstacles() {
+  const t = game.wallTheme || CONFIG.wallTheme;
+  const r = 6;
+  const obs = game.obstacles;
   push();
   rectMode(CORNER);
-  for (const o of CONFIG.obstacles) {
-    noStroke();
-    fill(0, 0, 0, 70);
-    rect(o.x + 3, o.y + 5, o.w, o.h, 7); // 陰影
-    fill("#475569");
-    rect(o.x, o.y, o.w, o.h, 7); // 本體
-    fill("#64748b");
-    rect(o.x, o.y, o.w, o.h * 0.42, 7); // 上緣高光
-    noFill();
-    stroke("#0f172a");
-    strokeWeight(2);
-    rect(o.x, o.y, o.w, o.h, 7);
-  }
+  noStroke();
+  // 陰影(實色 → 重疊不疊深、無接縫)
+  fill(t.edge);
+  for (const o of obs) rect(o.x + 3, o.y + 5, o.w, o.h, r);
+  // 本體
+  fill(t.base);
+  for (const o of obs) rect(o.x, o.y, o.w, o.h, r);
+  // 上緣高光
+  fill(t.hi);
+  for (const o of obs) rect(o.x, o.y, o.w, Math.min(o.h * 0.4, 16), r);
   pop();
 }
 
@@ -185,7 +205,7 @@ function tileBush(alpha) {
   const ctx = drawingContext;
   const tw = 60;
   const th = 54;
-  for (const bz of CONFIG.bushes) {
+  for (const bz of game.bushes) {
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.beginPath();
@@ -206,7 +226,7 @@ function drawBushesBase() {
   push();
   rectMode(CORNER);
   noStroke();
-  for (const bz of CONFIG.bushes) {
+  for (const bz of game.bushes) {
     fill("#15532e");
     rect(bz.x, bz.y, bz.w, bz.h, 16);
     fill("#124826");
@@ -224,7 +244,7 @@ function drawBushesCanopy() {
   push();
   rectMode(CORNER);
   noStroke();
-  for (const bz of CONFIG.bushes) {
+  for (const bz of game.bushes) {
     fill(34, 139, 69, 165);
     rect(bz.x, bz.y, bz.w, bz.h, 16);
     fill(46, 160, 82, 180);
@@ -581,7 +601,7 @@ function drawMenu() {
   fill(255);
   textSize(24);
   textStyle(BOLD);
-  text("開始比賽 ▶", CONFIG.canvas.w / 2, start.y + start.h / 2);
+  text("選擇地圖 ▶", CONFIG.canvas.w / 2, start.y + start.h / 2);
   textStyle(NORMAL);
 
   // 說明
@@ -623,11 +643,21 @@ function drawCharCard(c) {
   textAlign(CENTER, CENTER);
   noStroke();
 
-  // 角色圓
-  fill(stats.color);
-  stroke(CONFIG.teamColor.A);
-  strokeWeight(3);
-  circle(c.x + c.w / 2, c.y + 64, 76);
+  // 角色簡圖:主題色半透明底圈 + 角色立繪
+  const cxp = c.x + c.w / 2;
+  const cyp = c.y + 60;
+  const bg = color(stats.color);
+  bg.setAlpha(55);
+  noStroke();
+  fill(bg);
+  circle(cxp, cyp, 94);
+  const drawn = Assets.draw("char_" + c.key, cxp, cyp + 6, 72, 86);
+  if (!drawn) {
+    fill(stats.color);
+    stroke(CONFIG.teamColor.A);
+    strokeWeight(3);
+    circle(cxp, cyp, 76);
+  }
   noStroke();
 
   // 名字
@@ -665,9 +695,183 @@ function handleMenuClick() {
       return;
     }
   }
-  if (inRect(mouseX, mouseY, start)) startGame();
+  if (inRect(mouseX, mouseY, start)) goToMapSelect();
 }
 
 function inRect(mx, my, r) {
   return mx > r.x && mx < r.x + r.w && my > r.y && my < r.y + r.h;
+}
+
+// ------------------------------------------------------------
+// 選地圖畫面
+// ------------------------------------------------------------
+function mapSelectLayout() {
+  const cw = 196;
+  const ch = 300;
+  const gap = 24;
+  const total = cw * MAPS.length + gap * (MAPS.length - 1);
+  const startX = (CONFIG.canvas.w - total) / 2;
+  const y = 196;
+  const cards = MAPS.map((m, i) => ({
+    id: m.id,
+    map: m,
+    x: startX + i * (cw + gap),
+    y,
+    w: cw,
+    h: ch,
+  }));
+  const begin = { x: CONFIG.canvas.w / 2 - 100, y: y + ch + 40, w: 200, h: 58 };
+  const back = { x: 24, y: 28, w: 96, h: 40 };
+  return { cards, begin, back };
+}
+
+function drawMapSelect() {
+  push();
+  textAlign(CENTER, CENTER);
+
+  // 標題
+  fill(255);
+  textSize(42);
+  textStyle(BOLD);
+  text("選擇地圖", CONFIG.canvas.w / 2, 96);
+  textStyle(NORMAL);
+  fill(150);
+  textSize(16);
+  const me = CONFIG.brawlers[game.selectedKey];
+  text("出戰角色：" + me.name + " · 數字鍵 1~3 切換地圖", CONFIG.canvas.w / 2, 140);
+
+  const { cards, begin, back } = mapSelectLayout();
+  for (const c of cards) drawMapCard(c);
+
+  // 返回鍵
+  const bHover = inRect(mouseX, mouseY, back);
+  rectMode(CORNER);
+  noStroke();
+  fill(bHover ? "#475569" : "#334155");
+  rect(back.x, back.y, back.w, back.h, 10);
+  fill(235);
+  textSize(15);
+  text("◀ 返回", back.x + back.w / 2, back.y + back.h / 2);
+
+  // 開始按鈕
+  const sHover = inRect(mouseX, mouseY, begin);
+  fill(sHover ? "#16a34a" : "#15803d");
+  rect(begin.x, begin.y, begin.w, begin.h, 14);
+  fill(255);
+  textSize(24);
+  textStyle(BOLD);
+  text("開始比賽 ▶", CONFIG.canvas.w / 2, begin.y + begin.h / 2);
+  textStyle(NORMAL);
+
+  fill(140);
+  textSize(13);
+  text("點選地圖卡片預覽佈局 · Enter 開打 · Esc 返回選角", CONFIG.canvas.w / 2, begin.y + begin.h + 28);
+  pop();
+}
+
+function drawMapCard(c) {
+  const selected = game.selectedMapId === c.id;
+  const hover = inRect(mouseX, mouseY, c);
+
+  push();
+  rectMode(CORNER);
+  stroke(selected ? "#fbbf24" : hover ? "#64748b" : "#334155");
+  strokeWeight(selected ? 4 : 2);
+  fill("#161b22");
+  rect(c.x, c.y, c.w, c.h, 14);
+  noStroke();
+
+  // 縮圖預覽
+  const pad = 14;
+  const pvW = c.w - pad * 2;
+  const pvH = pvW * (CONFIG.canvas.h / CONFIG.canvas.w); // 維持球場長寬比
+  drawMapPreview(c.map, c.x + pad, c.y + pad, pvW, pvH);
+
+  // 名稱
+  textAlign(CENTER, CENTER);
+  fill(235);
+  textSize(20);
+  textStyle(BOLD);
+  text(c.map.name, c.x + c.w / 2, c.y + pad + pvH + 22);
+  textStyle(NORMAL);
+
+  // 描述
+  fill(165);
+  textSize(12);
+  c.map.desc.forEach((line, i) => {
+    text(line, c.x + c.w / 2, c.y + pad + pvH + 44 + i * 18);
+  });
+
+  if (selected) {
+    fill("#fbbf24");
+    textSize(13);
+    text("✓ 已選擇", c.x + c.w / 2, c.y + c.h - 14);
+  }
+  pop();
+}
+
+// 在 (rx,ry,rw,rh) 內畫出地圖縮圖(球場+障礙+草叢+雙門)
+function drawMapPreview(map, rx, ry, rw, rh) {
+  const f = CONFIG.field;
+  const fw = f.right - f.left;
+  const fh = f.bottom - f.top;
+  // 整張畫布 → 縮圖的縮放比(用 canvas 尺寸，使球門/邊界比例正確)
+  const sx = rw / CONFIG.canvas.w;
+  const sy = rh / CONFIG.canvas.h;
+  const tx = (vx) => rx + vx * sx;
+  const ty = (vy) => ry + vy * sy;
+
+  push();
+  rectMode(CORNER);
+  noStroke();
+
+  // 底(畫布底色)
+  fill("#0d1117");
+  rect(rx, ry, rw, rh, 6);
+
+  // 草皮 + 條紋
+  fill("#1f7a3d");
+  rect(tx(f.left), ty(f.top), fw * sx, fh * sy, 3);
+  fill("#1c6f38");
+  const stripeH = (fh / 8) * sy;
+  for (let i = 0; i < 8; i += 2) rect(tx(f.left), ty(f.top) + i * stripeH, fw * sx, stripeH);
+
+  // 球門(上紅下藍)
+  const gw = CONFIG.goal.halfWidth * 2 * sx;
+  const gx = tx(game.centerX) - gw / 2;
+  fill(CONFIG.teamColor.B);
+  rect(gx, ty(f.top) - 4 * sy, gw, 5 * sy, 2);
+  fill(CONFIG.teamColor.A);
+  rect(gx, ty(f.bottom), gw, 5 * sy, 2);
+
+  // 草叢
+  fill(46, 160, 82);
+  for (const bz of map.bushes) rect(tx(bz.x), ty(bz.y), bz.w * sx, bz.h * sy, 3);
+
+  // 障礙物(地圖配色,無描邊 → L 形相連無接縫)
+  noStroke();
+  fill(map.wall.base);
+  for (const o of map.obstacles) rect(tx(o.x), ty(o.y), o.w * sx, o.h * sy, 2);
+
+  // 邊框
+  noFill();
+  stroke("#0a2f18");
+  strokeWeight(2);
+  rect(tx(f.left), ty(f.top), fw * sx, fh * sy, 3);
+  pop();
+}
+
+function handleMapSelectClick() {
+  const { cards, begin, back } = mapSelectLayout();
+  if (inRect(mouseX, mouseY, back)) {
+    game.state = STATE.MENU;
+    return;
+  }
+  for (const c of cards) {
+    if (inRect(mouseX, mouseY, c)) {
+      game.selectedMapId = c.id;
+      return;
+    }
+  }
+  if (inRect(mouseX, mouseY, begin)) startGame();
 }
