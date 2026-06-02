@@ -13,7 +13,8 @@ class Brawler {
 
     this.maxHp = this.stats.maxHp;
     this.hp = this.maxHp;
-    this.radius = this.stats.radius;
+    this.radius = this.stats.radius;      // 立繪/撿球/中彈判定用(視覺大小)
+    this.colRadius = 13;                  // 撞牆/障礙物用的小體積(約 1 格),與立繪脫鉤 → 不卡轉角
     this.speed = this.stats.speed;
 
     this.spawn = { x: spawnX, y: spawnY };
@@ -89,6 +90,7 @@ class Brawler {
     this.lastAttackAt = -99999;
     this.lastDamagedAt = -99999;
     this.aimAngle = this.team === "A" ? -Math.PI / 2 : Math.PI / 2;
+    if (this.ai) this.ai.rejoinUntil = millis() + 2200; // 重生後直接追球歸隊
   }
 
   // ----- 主更新 -----
@@ -162,12 +164,11 @@ class Brawler {
   }
 
   fireSuperAttack() {
-    // 自動鎖定最近敵人
-    const target = game.nearestEnemy(this);
-    if (target) this.aimAngle = angleTo(this.x, this.y, target.x, target.y);
+    // 不自動鎖敵:直接往目前瞄準方向(玩家=滑鼠瞄準線)發射
     spawnAttack(this, true);
     this.super = 0;
     this.lastAttackAt = millis();
+    Sound.play("super");
   }
 
   kickBall(isSuper) {
@@ -200,6 +201,9 @@ class Brawler {
     }
     pop();
 
+    // 大招就緒:腳下旋轉黃色光環(沒大招不顯示)
+    if (this.canSuper()) this.drawSuperRing();
+
     // 角色立繪(直立、依瞄準左右翻面);尺寸貼近碰撞框,視覺與被牆擋住的位置一致
     const flip = Math.cos(this.aimAngle) < 0;
     const sw = this.radius * 2.5;
@@ -218,8 +222,41 @@ class Brawler {
     this.drawBars();
   }
 
+  // 血條/名字的關係色:自己綠、隊友藍、敵人紅
+  barColor() {
+    if (this.isPlayer) return "#22c55e";
+    return this.team === "A" ? CONFIG.teamColor.A : CONFIG.teamColor.B;
+  }
+
+  // 大招就緒:腳下一圈持續旋轉的黃色特效光環
+  drawSuperRing() {
+    const cx = this.x;
+    const cy = this.y + this.radius * 0.55;
+    const rx = this.radius * 1.9;
+    const ry = rx * 0.6;
+    const t = millis();
+    push();
+    translate(cx, cy);
+    // 柔光底(呼吸脈動)
+    noStroke();
+    fill(255, 215, 60, 45 + 28 * Math.sin(t / 220));
+    ellipse(0, 0, rx * 2.2, ry * 2.2);
+    // 旋轉虛線環
+    rotate(t / 320);
+    noFill();
+    stroke(255, 210, 50);
+    strokeWeight(3);
+    const segs = 9;
+    const span = (TWO_PI / segs) * 0.55;
+    for (let i = 0; i < segs; i++) {
+      const a0 = (i / segs) * TWO_PI;
+      arc(0, 0, rx * 2, ry * 2, a0, a0 + span);
+    }
+    pop();
+  }
+
   drawPlayerTag() {
-    const ty = this.y - this.radius - 46;
+    const ty = this.y - this.radius - 56;
     push();
     noStroke();
     fill("#fbbf24");
@@ -254,18 +291,31 @@ class Brawler {
     const w = 48;
     const x = this.x - w / 2;
     let y = this.y - this.radius - 28;
+    const col = this.barColor();
+
+    // 名字(顏色與血條相同,帶黑色陰影增加可讀性)
+    push();
+    textAlign(CENTER, BOTTOM);
+    textSize(11);
+    textStyle(BOLD);
+    noStroke();
+    fill(0, 0, 0, 170);
+    text(this.name, this.x + 1, y - 2);
+    fill(col);
+    text(this.name, this.x, y - 3);
+    pop();
 
     push();
     rectMode(CORNER);
     noStroke();
 
-    // HP
+    // HP(顏色=陣營關係色,長度=血量)
     const hpRatio = clampNum(this.hp / this.maxHp, 0, 1);
     fill(0, 0, 0, 150);
     rect(x - 2, y - 2, w + 4, 7 + 4);
     fill(60, 60, 60);
     rect(x, y, w, 7, 2);
-    fill(lerpColor(color("#ef4444"), color("#22c55e"), hpRatio));
+    fill(col);
     rect(x, y, w * hpRatio, 7, 2);
 
     // 彈藥 3 格
@@ -281,33 +331,27 @@ class Brawler {
       }
     }
 
-    // 大招條
-    y += 8;
-    const sr = this.super / CONFIG.superMax;
-    fill(40);
-    rect(x, y, w, 4, 1);
-    if (this.canSuper()) {
-      fill(180 + 60 * Math.sin(millis() / 120), 200, 255);
-    } else {
-      fill("#38bdf8");
-    }
-    rect(x, y, w * sr, 4, 1);
-
     pop();
   }
 
   // 玩家攻擊範圍指示(僅玩家、未持球時)
+  // 範圍形狀:有子彈=白色、空彈=紅色,皆帶深色邊框
   drawIndicator() {
     if (!this.alive) return;
     const cfg = this.stats.attack;
     const a = this.aimAngle;
-    const c = color(this.color);
+    const hasAmmo = this.ammo >= 1;
+    const col = hasAmmo ? color(255, 255, 255) : color(239, 68, 68);
+    const rr = red(col);
+    const gg = green(col);
+    const bb = blue(col);
 
     push();
     translate(this.x, this.y);
     rotate(a);
-    noStroke();
-    fill(red(c), green(c), blue(c), 40);
+    fill(rr, gg, bb, 70);        // 白/紅 半透明填色
+    stroke(0, 0, 0, 170);        // 深色邊框
+    strokeWeight(2.5);
 
     if (cfg.type === "fan") {
       const spread = radians(cfg.spreadDeg);
@@ -315,10 +359,10 @@ class Brawler {
     } else if (cfg.type === "cactus") {
       rectMode(CORNER);
       rect(this.radius, -cfg.projRadius - 1, cfg.range, (cfg.projRadius + 1) * 2, 4);
-      // 爆裂範圍提示
+      // 爆裂範圍提示(同色,較淡)
       push();
       translate(cfg.range, 0);
-      fill(red(c), green(c), blue(c), 26);
+      fill(rr, gg, bb, 40);
       circle(0, 0, cfg.smallRange * 2);
       pop();
     } else if (cfg.type === "line") {
@@ -327,12 +371,51 @@ class Brawler {
       rect(this.radius, -lw / 2, cfg.range, lw, 4);
     }
     pop();
+  }
 
-    // 準星線
+  // 持球時的踢球預瞄:從球沿瞄準方向預測路徑(遇牆/障礙物停止)
+  drawKickAim() {
+    const ball = game.ball;
+    if (!ball || ball.carrier !== this) return;
+    const a = this.aimAngle;
+    const f = CONFIG.field;
+    const step = 9;
+    let x = ball.x;
+    let y = ball.y;
+    let ex = x;
+    let ey = y;
+    for (let d = 0; d < 360; d += step) {
+      x += Math.cos(a) * step;
+      y += Math.sin(a) * step;
+      // 邊界(球門開口放行)
+      if (x < f.left + ball.radius || x > f.right - ball.radius) break;
+      if ((y < f.top + ball.radius || y > f.bottom - ball.radius) && !game.inGoalMouth(x)) break;
+      let blocked = false;
+      for (const o of game.obstacles) {
+        if (circleRectOverlap(x, y, ball.radius, o)) {
+          blocked = true;
+          break;
+        }
+      }
+      if (blocked) break;
+      ex = x;
+      ey = y;
+    }
     push();
-    stroke(255, 255, 255, 70);
-    strokeWeight(1);
-    line(this.x, this.y, this.x + Math.cos(a) * 46, this.y + Math.sin(a) * 46);
+    // 虛線軌跡
+    stroke(255, 255, 255, 210);
+    strokeWeight(3);
+    drawingContext.setLineDash([9, 9]);
+    line(ball.x, ball.y, ex, ey);
+    drawingContext.setLineDash([]);
+    // 箭頭
+    noStroke();
+    fill(255, 255, 255, 230);
+    push();
+    translate(ex, ey);
+    rotate(a);
+    triangle(0, 0, -11, -6, -11, 6);
+    pop();
     pop();
   }
 }

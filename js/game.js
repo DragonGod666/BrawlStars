@@ -133,7 +133,7 @@ class Game {
     this.ball.reset(this.centerX, this.centerY);
     this.projectiles = [];
     this.pendingShots = [];
-    this.loadObstacles(); // 每次開球牆面重生
+    // 進球後不復原場地:被大招打掉的牆整場保持破壞(只在開新比賽時重置)
   }
 
   startCountdown() {
@@ -197,10 +197,11 @@ class Game {
     for (const b of this.brawlers) {
       if (!b.alive) continue;
       // 多趟迭代:同時壓到相鄰障礙物時收斂出無重疊位置,避免抖動/卡死
+      // 用較小的 colRadius(約 1 格)→ 角色不會卡在轉角,立繪可略微疊到牆上
       for (let iter = 0; iter < 3; iter++) {
         let moved = false;
         for (const o of this.obstacles) {
-          const res = resolveCircleRect(b.x, b.y, b.radius, o);
+          const res = resolveCircleRect(b.x, b.y, b.colRadius, o);
           if (res) {
             b.x = res.x;
             b.y = res.y;
@@ -323,29 +324,11 @@ class Game {
     }
   }
 
+  // 角色之間不互相碰撞(可重疊),僅夾回球場邊界
   separateBrawlers() {
     const f = CONFIG.field;
-    const list = this.brawlers.filter((b) => b.alive);
-    for (let i = 0; i < list.length; i++) {
-      for (let j = i + 1; j < list.length; j++) {
-        const a = list[i];
-        const c = list[j];
-        const dx = c.x - a.x;
-        const dy = c.y - a.y;
-        const d = Math.hypot(dx, dy);
-        const minD = a.radius + c.radius;
-        if (d > 0 && d < minD) {
-          const push = (minD - d) / 2;
-          const nx = dx / d;
-          const ny = dy / d;
-          a.x -= nx * push;
-          a.y -= ny * push;
-          c.x += nx * push;
-          c.y += ny * push;
-        }
-      }
-    }
-    for (const b of list) {
+    for (const b of this.brawlers) {
+      if (!b.alive) continue;
       b.x = clampNum(b.x, f.left + b.radius, f.right - b.radius);
       b.y = clampNum(b.y, f.top + b.radius, f.bottom - b.radius);
     }
@@ -366,6 +349,7 @@ class Game {
   scoreGoal(team) {
     this.score[team]++;
     this.lastScorer = team;
+    Sound.play("goal");
     this.state = STATE.GOAL;
     this.goalEndAt = millis() + CONFIG.match.goalCelebrateMs;
     if (this.ball.carrier) this.ball.drop();

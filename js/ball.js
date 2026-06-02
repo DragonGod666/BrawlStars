@@ -36,6 +36,7 @@ class Ball {
     // 推到角色前方一點，避免立即再碰撞
     this.x = kicker.x + Math.cos(angle) * (kicker.radius + this.radius + 4);
     this.y = kicker.y + Math.sin(angle) * (kicker.radius + this.radius + 4);
+    Sound.play("kick");
   }
 
   drop() {

@@ -18,6 +18,7 @@ function setup() {
   cnv.elt.addEventListener("contextmenu", (e) => e.preventDefault());
   textFont("Microsoft JhengHei, Segoe UI, sans-serif");
   Assets.init();
+  Sound.init();
   game = new Game();
 }
 
@@ -26,10 +27,12 @@ function draw() {
 
   if (game.state === STATE.MENU) {
     drawMenu();
+    drawMuteButton();
     return;
   }
   if (game.state === STATE.MAPSELECT) {
     drawMapSelect();
+    drawMuteButton();
     return;
   }
 
@@ -44,7 +47,10 @@ function draw() {
   const p = game.player;
   const showInd =
     game.state === STATE.PLAYING || game.state === STATE.COUNTDOWN || game.state === STATE.GOAL;
-  if (p && p.alive && !p.hasBall && showInd) p.drawIndicator();
+  if (p && p.alive && showInd) {
+    if (p.hasBall) p.drawKickAim();
+    else p.drawIndicator();
+  }
 
   for (const pr of game.projectiles) pr.draw();
   if (game.ball) game.ball.draw();
@@ -63,6 +69,49 @@ function draw() {
   if (game.state === STATE.COUNTDOWN) drawCountdown();
   if (game.state === STATE.GOAL) drawGoalBanner();
   if (game.state === STATE.GAMEOVER) drawGameOver();
+
+  drawMuteButton();
+}
+
+// ------------------------------------------------------------
+// 右上角靜音按鈕
+// ------------------------------------------------------------
+function muteButtonRect() {
+  return { x: CONFIG.canvas.w - 46, y: 14, w: 32, h: 32 };
+}
+
+function drawMuteButton() {
+  const r = muteButtonRect();
+  const hover = inRect(mouseX, mouseY, r);
+  const cx = r.x + r.w / 2;
+  const cy = r.y + r.h / 2;
+
+  push();
+  rectMode(CORNER);
+  noStroke();
+  fill(0, 0, 0, hover ? 160 : 110);
+  rect(r.x, r.y, r.w, r.h, 7);
+
+  // 喇叭本體 + 錐
+  noStroke();
+  fill(235);
+  rect(cx - 8, cy - 3, 4, 6, 1); // 底座
+  triangle(cx - 5, cy - 7, cx - 5, cy + 7, cx + 2, cy); // 喇叭口
+
+  if (Sound.muted) {
+    // 靜音:紅色斜線
+    stroke(239, 68, 68);
+    strokeWeight(2.6);
+    line(cx - 9, cy - 9, cx + 10, cy + 10);
+  } else {
+    // 音波弧
+    noFill();
+    stroke(235);
+    strokeWeight(2);
+    arc(cx + 2, cy, 8, 13, -PI / 3, PI / 3);
+    arc(cx + 2, cy, 15, 21, -PI / 3, PI / 3);
+  }
+  pop();
 }
 
 // ------------------------------------------------------------
@@ -89,6 +138,14 @@ function updatePlayerIntent() {
 }
 
 function mousePressed() {
+  // 第一次互動啟動背景音樂(瀏覽器自動播放限制)
+  Sound.start();
+  // 右上角靜音鈕(任何畫面都可點)
+  if (mouseButton === LEFT && inRect(mouseX, mouseY, muteButtonRect())) {
+    Sound.toggleMute();
+    return false;
+  }
+
   if (game.state === STATE.MENU) {
     handleMenuClick();
     return false;
@@ -113,6 +170,7 @@ function mouseReleased() {
 }
 
 function keyPressed() {
+  Sound.start(); // 第一次互動啟動背景音樂
   if (game.state === STATE.MENU) {
     if (key === "1") game.selectedKey = "shelly";
     else if (key === "2") game.selectedKey = "spike";
@@ -604,24 +662,18 @@ function drawMenu() {
   text("選擇地圖 ▶", CONFIG.canvas.w / 2, start.y + start.h / 2);
   textStyle(NORMAL);
 
-  // 說明
-  fill(140);
+  // 說明(精簡為兩行,避免文字擠在一起)
+  fill(150);
   textSize(13);
   text(
-    "雙方陣容皆為 雪莉 / 史派克 / 柯爾特 · 你控制 1 隻，其餘為 AI",
+    "WASD 移動 · 滑鼠瞄準 · 左鍵 攻擊/踢球 · 右鍵 大招",
     CONFIG.canvas.w / 2,
-    start.y + start.h + 34
+    start.y + start.h + 32
   );
   text(
-    "WASD 移動 · 滑鼠瞄準 · 左鍵 普攻/踢球 · 右鍵 大招(自動鎖敵)/大招踢球 · 數字鍵1~3選角",
+    "雙方各 3 角色 · 你操控 1 隻其餘為 AI · 數字鍵 1~3 選角",
     CONFIG.canvas.w / 2,
-    start.y + start.h + 56
-  );
-  fill(170);
-  text(
-    "藍色光環=你方　紅色光環=敵人　·　躲進草叢可對敵隱形　·　灰色方塊會擋住人與子彈",
-    CONFIG.canvas.w / 2,
-    start.y + start.h + 80
+    start.y + start.h + 54
   );
   pop();
 }
@@ -679,11 +731,7 @@ function drawCharCard(c) {
     text(line, c.x + c.w / 2, c.y + 174 + i * 20);
   });
 
-  if (selected) {
-    fill("#fbbf24");
-    textSize(13);
-    text("✓ 已選擇", c.x + c.w / 2, c.y + c.h - 14);
-  }
+  if (selected) drawCheckBadge(c.x + c.w - 20, c.y + 20);
   pop();
 }
 
@@ -700,6 +748,21 @@ function handleMenuClick() {
 
 function inRect(mx, my, r) {
   return mx > r.x && mx < r.x + r.w && my > r.y && my < r.y + r.h;
+}
+
+// 選取徽章:右上角黃色圓圈內一個打勾(取代「已選擇」文字,避免擁擠)
+function drawCheckBadge(cx, cy) {
+  push();
+  noStroke();
+  fill("#fbbf24");
+  circle(cx, cy, 28);
+  stroke("#14110a");
+  strokeWeight(4);
+  strokeCap(ROUND);
+  noFill();
+  line(cx - 7, cy + 1, cx - 2, cy + 6);
+  line(cx - 2, cy + 6, cx + 8, cy - 6);
+  pop();
 }
 
 // ------------------------------------------------------------
@@ -802,11 +865,7 @@ function drawMapCard(c) {
     text(line, c.x + c.w / 2, c.y + pad + pvH + 44 + i * 18);
   });
 
-  if (selected) {
-    fill("#fbbf24");
-    textSize(13);
-    text("✓ 已選擇", c.x + c.w / 2, c.y + c.h - 14);
-  }
+  if (selected) drawCheckBadge(c.x + c.w - 20, c.y + 20);
   pop();
 }
 
